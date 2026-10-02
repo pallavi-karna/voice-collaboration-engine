@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Voice Engine - Voice & Chat</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #202225;
+      color: #dcddde;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      padding: 12px 24px;
+      background: #2f3136;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .room-info {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 13px;
+      color: #b9bbbe;
+    }
+    .copy-btn {
+      padding: 6px 12px;
+      background: #4f545c;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .copy-btn:hover { background: #5d6269; }
+
+    /* Lobby Screen */
+    .lobby-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .lobby-card {
+      background: #36393f;
+      padding: 32px;
+      border-radius: 12px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .lobby-card h2 { margin-bottom: 8px; color: #fff; }
+    .lobby-card p { font-size: 13px; color: #b9bbbe; margin-bottom: 20px; }
+    .lobby-card input {
+      width: 100%;
+      padding: 10px 14px;
+      background: #202225;
+      border: 1px solid #4f545c;
+      border-radius: 8px;
+      color: #fff;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    .primary-btn {
+      width: 100%;
+      padding: 12px;
+      background: #5865f2;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .primary-btn:hover { background: #4752c4; }
+
+    /* Main Container */
+    .main-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 50px);
+    }
+    .stage-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .stage {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .user-card {
+      background: #2f3136;
+      padding: 24px;
+      border-radius: 16px;
+      width: 150px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .avatar {
+      width: 80px;
+      height: 80px;
+      background: #5865f2;
+      border-radius: 50%;
+      margin: 0 auto 12px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: bold;
+      color: white;
+      border: 4px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .avatar.speaking {
+      border-color: #3ba55d !important;
+      box-shadow: 0 0 16px #3ba55d;
+    }
+    .user-name { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .badge { font-size: 12px; color: #8e9297; }
+
+    /* Controls Bar */
+    .controls {
+      position: absolute;
+      bottom: 24px;
+      display: flex;
+      gap: 12px;
+      background: #292b2f;
+      padding: 10px 20px;
+      border-radius: 30px;
+    }
+    .ctrl-btn {
+      padding: 10px 18px;
+      font-size: 14px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      background: #4f545c;
+      color: white;
+    }
+    .ctrl-btn.muted { background: #ed4245; }
+    .ctrl-btn.leave { background: #ed4245; }
+
+    /* Chat Sidebar */
+    .chat-sidebar {
+      width: 320px;
+      background: #2f3136;
+      border-left: 1px solid #202225;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-header {
+      padding: 14px;
+      font-weight: bold;
+      border-bottom: 1px solid #202225;
+      color: #fff;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg-bubble {
+      background: #36393f;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .msg-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 11px;
+      color: #8e9297;
+    }
+    .msg-sender { font-weight: bold; }
+    .msg-sender.self { color: #5865f2; }
+    .msg-sender.peer { color: #3ba55d; }
+    .chat-input-bar {
+      padding: 12px;
+      background: #292b2f;
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input-bar input {
+      flex: 1;
+      padding: 8px 12px;
+      background: #40444b;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      outline: none;
+    }
+    .chat-input-bar button {
+      background: #5865f2;
+      color: white;
+      border-radius: 6px;
+      padding: 8px 14px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="lobby-modal" id="lobbyModal">
+    <div class="lobby-card">
+      <h2>Voice Engine</h2>
+      <p>Enter a room name or join with the pre-filled ID</p>
+      <input type="text" id="roomInput" placeholder="e.g. daily-standup" />
+      <button class="primary-btn" id="startCallBtn">Enter Room</button>
+    </div>
+  </div>
+
+  <header>
+    <div>Voice Engine Stage</div>
+    <div class="room-info" id="roomInfoBar" style="display: none;">
+      <span>Room: <strong id="currentRoomDisplay"></strong></span>
+      <button class="copy-btn" id="copyLinkBtn">Copy Link</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="stage-area">
+      <div class="stage">
+        <div class="user-card">
+          <div id="localAvatar" class="avatar">You</div>
+          <div class="user-name">You (Local)</div>
+          <div id="localMuteStatus" class="badge">Active</div>
+        </div>
+
+        <div class="user-card" id="remoteCard" style="display: none;">
+          <div id="remoteAvatar" class="avatar">P2</div>
+          <div class="user-name">Remote Peer</div>
+          <div class="badge">Connected</div>
+        </div>
+      </div>
+
+      <div class="controls" id="controlsBar" style="display: none;">
+        <button class="ctrl-btn" id="muteBtn">Mute Mic</button>
+        <button class="ctrl-btn leave" id="leaveBtn">Leave</button>
+      </div>
+    </div>
+
+    <div class="chat-sidebar">
+      <div class="chat-header"># general-chat</div>
+      <div class="chat-messages" id="chatBox"></div>
+      <div class="chat-input-bar">
+        <input type="text" id="msgInput" placeholder="Message #general-chat..." />
+        <button id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="remoteAudio" autoplay></audio>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let localStream;
+    let peerConnection;
+    let isMuted = false;
+    let roomId = '';
+
+    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    const lobbyModal = document.getElementById('lobbyModal');
+    const roomInput = document.getElementById('roomInput');
+    const startCallBtn = document.getElementById('startCallBtn');
+    const roomInfoBar = document.getElementById('roomInfoBar');
+    const currentRoomDisplay = document.getElementById('currentRoomDisplay');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const controlsBar = document.getElementById('controlsBar');
+    const muteBtn = document.getElementById('muteBtn');
+    const leaveBtn = document.getElementById('leaveBtn');
+    const remoteCard = document.getElementById('remoteCard');
+    const localAvatar = document.getElementById('localAvatar');
+    const chatBox = document.getElementById('chatBox');
+    const msgInput = document.getElementById('msgInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('room')) {
+      roomInput.value = urlParams.get('room');
+    } else {
+      roomInput.value = 'dev-team';
+    }
+
+    startCallBtn.onclick = async () => {
+      roomId = roomInput.value.trim() || 'default-room';
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        attachVoiceDetector(localStream, localAvatar, true);
+
+        lobbyModal.style.display = 'none';
+        roomInfoBar.style.display = 'flex';
+        controlsBar.style.display = 'flex';
+        currentRoomDisplay.innerText = roomId;
+
+        const newUrl = `${window.location.origin}?room=${encodeURIComponent(roomId)}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+
+        socket.emit('join-room', roomId);
+      } catch (err) {
+        alert('Microphone access required to join the voice room.');
+      }
+    };
+
+    copyLinkBtn.onclick = () => {
+      navigator.clipboard.writeText(window.location.href);
+      copyLinkBtn.innerText = 'Copied!';
+      setTimeout(() => copyLinkBtn.innerText = 'Copy Link', 2000);
+    };
+
+    leaveBtn.onclick = () => {
+      window.location.href = window.location.origin;
+    };
+
+    muteBtn.onclick = () => {
+      if (!localStream) return;
+      isMuted = !isMuted;
+      localStream.getAudioTracks()[0].enabled = !isMuted;
+      muteBtn.innerText = isMuted ? 'Unmute Mic' : 'Mute Mic';
+      muteBtn.classList.toggle('muted', isMuted);
+      document.getElementById('localMuteStatus').innerText = isMuted ? 'Muted' : 'Active';
+      if (isMuted) localAvatar.classList.remove('speaking');
+    };
+
+    function attachVoiceDetector(stream, avatarElement, isLocal = false) {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioCtxClass();
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const analyser = audioCtx.createAnalyser();
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      analyser.fftSize = 256;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      function checkVolume() {
+        if (isLocal && isMuted) {
+          avatarElement.classList.remove('speaking');
+        } else {
+          analyser.getByteFrequencyData(dataArray);
+          let sum = dataArray.reduce((a, b) => a + b, 0);
+          let average = sum / dataArray.length;
+          avatarElement.classList.toggle('speaking', average > 12);
+        }
+        requestAnimationFrame(checkVolume);
+      }
+      checkVolume();
+    }
+
+    function sendMessage() {
+      const text = msgInput.value.trim();
+      if (!text) return;
+      socket.emit('send-message', { text, senderId: socket.id });
+      msgInput.value = '';
+    }
+
+    sendBtn.onclick = sendMessage;
+    msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    socket.on('receive-message', (data) => {
+      const isMe = data.originalSenderId === socket.id;
+      const div = document.createElement('div');
+      div.className = 'msg-bubble';
+      div.innerHTML = `
+        <div class="msg-header">
+          <span class="msg-sender ${isMe ? 'self' : 'peer'}">${isMe ? 'You' : 'Peer'}</span>
+          <span>${data.time}</span>
+        </div>
+        <div>${data.text}</div>
+      `;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    socket.on('user-joined', async (targetUserId) => {
+      remoteCard.style.display = 'block';
+      peerConnection = createPeer(targetUserId);
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      socket.emit('signal', { target: targetUserId, signal: offer });
+    });
+
+    socket.on('signal', async ({ sender, signal }) => {
+      remoteCard.style.display = 'block';
+      if (!peerConnection) peerConnection = createPeer(sender);
+
+      if (signal.type === 'offer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('signal', { target: sender, signal: answer });
+      } else if (signal.type === 'answer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
+      } else if (signal.candidate) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
+      }
+    });
+
+    socket.on('user-left', () => {
+      remoteCard.style.display = 'none';
+      if (peerConnection) { peerConnection.close(); peerConnection = null; }
+    });
+
+    function createPeer(targetUserId) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+
+      pc.ontrack = (event) => {
+        const remoteAudio = document.getElementById('remoteAudio');
+        remoteAudio.srcObject = event.streams[0];
+        remoteAudio.play().catch(() => {});
+        attachVoiceDetector(event.streams[0], document.getElementById('remoteAvatar'), false);
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('signal', { target: targetUserId, signal: { candidate: event.candidate } });
+        }
+      };
+      return pc;
+    }
+  </script>
+</body>
+</html>
