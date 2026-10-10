@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="Peer-to-peer audio transmission and text messaging engine built on WebRTC and WebSockets.">
+  <meta name="description" content="Peer-to-peer audio, video, and text messaging engine built on WebRTC and WebSockets.">
   <meta name="theme-color" content="#18181b">
-  <title>Voice Engine Client</title>
+  <title>Voice & Video Engine Node</title>
   <style>
     * {
       box-sizing: border-box;
@@ -29,7 +29,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background-color: rgba(0, 0, 0, 0.8);
+      background-color: rgba(0, 0, 0, 0.85);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -42,11 +42,11 @@
       border: 1px solid #52525b;
       padding: 24px;
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
     }
 
     .panel-box h1, .panel-box h2 {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       color: #fafafa;
       margin-bottom: 8px;
@@ -55,10 +55,46 @@
     }
 
     .panel-box p {
-      font-size: 13px;
+      font-size: 12px;
       color: #a1a1aa;
       line-height: 1.4;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+    }
+
+    .tab-switch {
+      display: flex;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #52525b;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      background-color: transparent;
+      color: #a1a1aa;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    .tab-btn.active {
+      background-color: #3f3f46;
+      color: #fafafa;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      font-size: 11px;
+      color: #d4d4d8;
+      text-transform: uppercase;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 6px;
     }
 
     .text-input {
@@ -69,16 +105,62 @@
       color: #fafafa;
       font-size: 13px;
       outline: none;
-      margin-bottom: 12px;
     }
 
     .text-input:focus {
       border-color: #d4d4d8;
     }
 
+    /* Preset Avatar Selector */
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .avatar-tile {
+      height: 48px;
+      background-color: #18181b;
+      border: 1px solid #52525b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      color: #d4d4d8;
+    }
+
+    .avatar-tile.selected {
+      border: 2px solid #fafafa;
+      background-color: #3f3f46;
+      color: #fff;
+    }
+
+    .upload-btn-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .file-input-hidden {
+      display: none;
+    }
+
+    .preview-box {
+      width: 36px;
+      height: 36px;
+      background-color: #09090b;
+      border: 1px solid #52525b;
+      object-fit: cover;
+      display: none;
+    }
+
     .btn {
-      padding: 10px 16px;
-      font-size: 13px;
+      padding: 10px 14px;
+      font-size: 12px;
       font-weight: 700;
       border: 1px solid #52525b;
       cursor: pointer;
@@ -106,7 +188,7 @@
     }
 
     .legal-links {
-      margin-top: 16px;
+      margin-top: 14px;
       display: flex;
       justify-content: space-between;
       font-size: 11px;
@@ -175,11 +257,12 @@
       flex-wrap: wrap;
       align-content: flex-start;
       flex: 1;
+      overflow-y: auto;
     }
 
     .user-block {
-      width: 170px;
-      height: 190px;
+      width: 200px;
+      height: 220px;
       background-color: #27272a;
       border: 1px solid #3f3f46;
       display: flex;
@@ -190,7 +273,27 @@
       position: relative;
     }
 
-    .user-indicator {
+    .video-viewport {
+      width: 100%;
+      height: 140px;
+      background-color: #09090b;
+      border: 1px solid #3f3f46;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .video-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .user-avatar-element {
       width: 64px;
       height: 64px;
       background-color: #3f3f46;
@@ -198,13 +301,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       color: #fafafa;
-      margin-bottom: 12px;
+      object-fit: cover;
     }
 
-    .user-indicator.active-voice {
+    .user-avatar-element.active-voice {
       border-color: #22c55e;
       background-color: #14532d;
     }
@@ -213,7 +316,11 @@
       font-size: 13px;
       font-weight: 700;
       color: #f4f4f5;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .user-state {
@@ -228,8 +335,8 @@
       align-items: center;
       justify-content: center;
       border: 1px dashed #3f3f46;
-      width: 170px;
-      height: 190px;
+      width: 200px;
+      height: 220px;
       padding: 16px;
       text-align: center;
       font-size: 12px;
@@ -345,7 +452,7 @@
       font-size: 12px;
     }
 
-    /* Mobile Handling */
+    /* Mobile */
     @media (max-width: 768px) {
       .chat-section {
         position: absolute;
@@ -363,19 +470,52 @@
       }
       .action-deck .btn {
         flex: 1;
+        padding: 8px 4px;
+        font-size: 11px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Entry Dialog -->
-  <div class="modal-overlay" id="joinModal">
+  <!-- Entry / Setup Modal -->
+  <div class="modal-overlay" id="entryModal">
     <div class="panel-box">
-      <h1>Voice Engine</h1>
-      <p>Direct peer to peer voice communication session. Audio is transmitted straight between browsers.</p>
-      <input type="text" id="roomInput" class="text-input" placeholder="Room Identifier" maxlength="32" value="main-room">
-      <button class="btn btn-solid" id="joinBtn">Connect to Session</button>
+      <h1>Voice & Video Session</h1>
+      <p>Configure personal profile and room target before transmission.</p>
+
+      <div class="tab-switch">
+        <button class="tab-btn active" id="tabCreate">Create Room</button>
+        <button class="tab-btn" id="tabJoin">Join Room</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Display Name</label>
+        <input type="text" id="nameInput" class="text-input" placeholder="Operator Name" maxlength="24" value="User-Alpha">
+      </div>
+
+      <div class="form-group" id="roomGroupJoin" style="display: none;">
+        <label class="form-label">Room Code</label>
+        <input type="text" id="roomInput" class="text-input" placeholder="Enter Room Identifier (e.g. ROOM-8492)" maxlength="32">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select Profile Icon or Upload</label>
+        <div class="avatar-grid">
+          <div class="avatar-tile selected" data-avatar="OPERATOR">OPR</div>
+          <div class="avatar-tile" data-avatar="PILOT">PLT</div>
+          <div class="avatar-tile" data-avatar="NOMAD">NMD</div>
+          <div class="avatar-tile" data-avatar="CYBER">CYB</div>
+        </div>
+        <div class="upload-btn-wrap">
+          <input type="file" id="imageFileInput" accept="image/*" class="file-input-hidden">
+          <button type="button" class="btn btn-secondary" id="triggerUploadBtn">Choose Photo</button>
+          <img id="avatarPreview" class="preview-box" alt="Avatar">
+        </div>
+      </div>
+
+      <button class="btn btn-solid" id="startSessionBtn">Start Session</button>
+
       <div class="legal-links">
         <a id="openTermsLink">Terms of Service</a>
         <a id="openPrivacyLink">Privacy Policy</a>
@@ -387,9 +527,9 @@
   <div class="modal-overlay" id="termsModal" style="display: none;">
     <div class="panel-box document-card">
       <h2>Terms of Service</h2>
-      <p>1. Purpose: This engine serves real-time peer communications over browser WebRTC standards.</p>
-      <p>2. Bandwidth: Voice packets stream direct between endpoints. The central node coordinates signaling data only.</p>
-      <p>3. Permitted Usage: Users are responsible for all transmissions initiated during room sessions.</p>
+      <p>1. Purpose: Direct browser-to-browser media relay over WebRTC protocol.</p>
+      <p>2. Hardware Capture: Voice and camera tracks operate on local device permissions.</p>
+      <p>3. Zero Transmission Logs: Media streams are peer-encrypted and never stored centrally.</p>
       <button class="btn btn-secondary" id="closeTermsBtn" style="width: 100%; margin-top: 12px;">Close Terms</button>
     </div>
   </div>
@@ -398,16 +538,15 @@
   <div class="modal-overlay" id="privacyModal" style="display: none;">
     <div class="panel-box document-card">
       <h2>Privacy Policy</h2>
-      <p>1. Zero Storage: Audio streams bypass server storage and are transferred directly between peer machines.</p>
-      <p>2. Ephemeral Chat: Text messaging buffers are retained strictly in memory during an active session and deleted when empty.</p>
-      <p>3. Minimal Telemetry: No trackers, cookies, or profiling systems are bound to your transmission session.</p>
+      <p>1. Ephemeral Data: Display names and custom profile thumbnails stay strictly in active room memory.</p>
+      <p>2. Zero Cookies: No tracking pixels, persistent identity storage, or targeting engines.</p>
       <button class="btn btn-secondary" id="closePrivacyBtn" style="width: 100%; margin-top: 12px;">Close Policy</button>
     </div>
   </div>
 
   <!-- Navigation Bar -->
   <header>
-    <div class="brand-title">Audio Transmission Node</div>
+    <div class="brand-title">Node Collaboration Stage</div>
     <div class="session-info" id="sessionInfo" style="display: none;">
       <span class="session-badge">ROOM: <span id="currentRoomText" style="color: #fafafa; font-weight: 700;"></span></span>
       <button class="btn btn-secondary" id="copyBtn" style="padding: 4px 8px; font-size: 11px;">Copy Link</button>
@@ -416,32 +555,28 @@
 
   <!-- Workspace Body -->
   <div class="workspace">
-    <!-- Active Stage -->
     <div class="stage">
-      <div class="peers-container">
-        <!-- Local User -->
-        <div class="user-block">
-          <div class="user-indicator" id="selfIndicator">LOC</div>
-          <div class="user-label">Local Host</div>
-          <div class="user-state" id="selfState">Online</div>
+      <div class="peers-container" id="peersContainer">
+        <!-- Self Participant Tile -->
+        <div class="user-block" id="selfBlock">
+          <div class="video-viewport">
+            <video id="selfVideo" autoplay muted playsinline></video>
+            <div id="selfAvatarFallback" class="user-avatar-element">OPR</div>
+          </div>
+          <div class="user-label" id="selfNameLabel">User-Alpha</div>
+          <div class="user-state" id="selfState">Audio Active</div>
         </div>
 
-        <!-- Remote User -->
-        <div class="user-block" id="remoteBlock" style="display: none;">
-          <div class="user-indicator" id="remoteIndicator">REM</div>
-          <div class="user-label">Remote Peer</div>
-          <div class="user-state" id="remoteState">Connected</div>
-        </div>
-
-        <!-- Empty State Notice -->
+        <!-- Waiting Notice -->
         <div class="empty-notice" id="emptyNotice">
-          Waiting for remote peer connection.
+          Waiting for remote peers to join room code.
         </div>
       </div>
 
-      <!-- Control Bar -->
+      <!-- Action Deck -->
       <div class="action-deck" id="actionDeck" style="display: none;">
-        <button class="btn btn-secondary" id="muteBtn">Mute</button>
+        <button class="btn btn-secondary" id="muteBtn">Mute Mic</button>
+        <button class="btn btn-secondary" id="cameraBtn">Start Video</button>
         <button class="btn btn-secondary" id="chatToggleBtn">Chat</button>
         <button class="btn btn-alert" id="disconnectBtn">Disconnect</button>
       </div>
@@ -450,87 +585,169 @@
     <!-- Chat Console -->
     <div class="chat-section" id="chatSection">
       <div class="chat-header">
-        <span>Data Log</span>
+        <span>Session Data Log</span>
         <button class="btn btn-secondary" id="hideChatBtn" style="padding: 2px 6px; font-size: 10px;">Hide</button>
       </div>
       <div class="message-feed" id="messageFeed"></div>
       <div class="chat-controls">
-        <input type="text" id="chatInput" placeholder="Enter transmission..." maxlength="500">
+        <input type="text" id="chatInput" placeholder="Enter message..." maxlength="500">
         <button id="sendBtn">Send</button>
       </div>
     </div>
   </div>
 
-  <audio id="remoteAudio" autoplay playsinline></audio>
-
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
     let localStream = null;
-    let peerConnection = null;
     let isMuted = false;
-    let roomId = '';
+    let isVideoActive = false;
+    let currentRoomId = '';
+    let chosenAvatar = 'OPR';
+    let customAvatarBase64 = null;
+    let isCreateMode = true;
+
+    // Track active peer connections and DOM blocks by peer ID
+    const peerConnections = new Map();
+    const peerBlocks = new Map();
 
     const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-    // Element bindings
-    const joinModal = document.getElementById('joinModal');
+    // DOM Elements
+    const entryModal = document.getElementById('entryModal');
+    const tabCreate = document.getElementById('tabCreate');
+    const tabJoin = document.getElementById('tabJoin');
+    const roomGroupJoin = document.getElementById('roomGroupJoin');
+    const nameInput = document.getElementById('nameInput');
+    const roomInput = document.getElementById('roomInput');
+    const avatarTiles = document.querySelectorAll('.avatar-tile');
+    const triggerUploadBtn = document.getElementById('triggerUploadBtn');
+    const imageFileInput = document.getElementById('imageFileInput');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const startSessionBtn = document.getElementById('startSessionBtn');
+
     const termsModal = document.getElementById('termsModal');
     const privacyModal = document.getElementById('privacyModal');
-    const roomInput = document.getElementById('roomInput');
-    const joinBtn = document.getElementById('joinBtn');
     const openTermsLink = document.getElementById('openTermsLink');
     const closeTermsBtn = document.getElementById('closeTermsBtn');
     const openPrivacyLink = document.getElementById('openPrivacyLink');
     const closePrivacyBtn = document.getElementById('closePrivacyBtn');
+
     const sessionInfo = document.getElementById('sessionInfo');
     const currentRoomText = document.getElementById('currentRoomText');
     const copyBtn = document.getElementById('copyBtn');
     const actionDeck = document.getElementById('actionDeck');
     const muteBtn = document.getElementById('muteBtn');
+    const cameraBtn = document.getElementById('cameraBtn');
     const chatToggleBtn = document.getElementById('chatToggleBtn');
     const disconnectBtn = document.getElementById('disconnectBtn');
-    const selfIndicator = document.getElementById('selfIndicator');
-    const selfState = document.getElementById('selfState');
-    const remoteBlock = document.getElementById('remoteBlock');
-    const remoteIndicator = document.getElementById('remoteIndicator');
+
+    const peersContainer = document.getElementById('peersContainer');
     const emptyNotice = document.getElementById('emptyNotice');
+    const selfVideo = document.getElementById('selfVideo');
+    const selfAvatarFallback = document.getElementById('selfAvatarFallback');
+    const selfNameLabel = document.getElementById('selfNameLabel');
+    const selfState = document.getElementById('selfState');
+
     const chatSection = document.getElementById('chatSection');
     const hideChatBtn = document.getElementById('hideChatBtn');
     const messageFeed = document.getElementById('messageFeed');
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    // Document Modal Listeners
+    // Modals
     openTermsLink.onclick = () => { termsModal.style.display = 'flex'; };
     closeTermsBtn.onclick = () => { termsModal.style.display = 'none'; };
     openPrivacyLink.onclick = () => { privacyModal.style.display = 'flex'; };
     closePrivacyBtn.onclick = () => { privacyModal.style.display = 'none'; };
 
-    // Query parameters
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('room')) {
-      roomInput.value = params.get('room').replace(/[^a-zA-Z0-9-_]/g, '');
+    // Tab Switches: Create vs. Join
+    tabCreate.onclick = () => {
+      isCreateMode = true;
+      tabCreate.classList.add('active');
+      tabJoin.classList.remove('active');
+      roomGroupJoin.style.display = 'none';
+      startSessionBtn.innerText = 'Create & Start';
+    };
+
+    tabJoin.onclick = () => {
+      isCreateMode = false;
+      tabJoin.classList.add('active');
+      tabCreate.classList.remove('active');
+      roomGroupJoin.style.display = 'block';
+      startSessionBtn.innerText = 'Join Room';
+    };
+
+    // Pre-populate if query parameter exists
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('room')) {
+      tabJoin.click();
+      roomInput.value = urlParams.get('room').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
     }
 
-    // Connect flow
-    joinBtn.onclick = async () => {
-      roomId = roomInput.value.trim().replace(/[^a-zA-Z0-9-_]/g, '') || 'main-room';
+    // Avatar Selection & Image Upload
+    avatarTiles.forEach(tile => {
+      tile.onclick = () => {
+        avatarTiles.forEach(t => t.classList.remove('selected'));
+        tile.classList.add('selected');
+        chosenAvatar = tile.getAttribute('data-avatar');
+        customAvatarBase64 = null;
+        avatarPreview.style.display = 'none';
+      };
+    });
+
+    triggerUploadBtn.onclick = () => imageFileInput.click();
+    imageFileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        customAvatarBase64 = uploadEvent.target.result;
+        avatarPreview.src = customAvatarBase64;
+        avatarPreview.style.display = 'block';
+        avatarTiles.forEach(t => t.classList.remove('selected'));
+        chosenAvatar = 'CUSTOM';
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // Session Start
+    startSessionBtn.onclick = async () => {
+      const enteredName = nameInput.value.trim() || 'User-Alpha';
+      selfNameLabel.innerText = enteredName;
+
+      if (isCreateMode) {
+        currentRoomId = 'ROOM-' + Math.floor(1000 + Math.random() * 9000);
+      } else {
+        currentRoomId = roomInput.value.trim().toUpperCase() || 'ROOM-1000';
+      }
+
+      // Configure local avatar display
+      if (customAvatarBase64) {
+        selfAvatarFallback.innerHTML = `<img src="${customAvatarBase64}" style="width:100%;height:100%;object-fit:cover;">`;
+      } else {
+        selfAvatarFallback.innerText = chosenAvatar;
+      }
+
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        attachVoiceDetector(localStream, selfIndicator, true);
+        attachVoiceDetector(localStream, selfAvatarFallback, true);
 
-        joinModal.style.display = 'none';
+        entryModal.style.display = 'none';
         sessionInfo.style.display = 'flex';
         actionDeck.style.display = 'flex';
-        currentRoomText.innerText = roomId;
+        currentRoomText.innerText = currentRoomId;
 
-        const updatedUrl = window.location.origin + '?room=' + encodeURIComponent(roomId);
-        window.history.pushState({ path: updatedUrl }, '', updatedUrl);
+        const cleanUrl = window.location.origin + '?room=' + encodeURIComponent(currentRoomId);
+        window.history.pushState({ path: cleanUrl }, '', cleanUrl);
 
-        socket.emit('join-room', roomId);
+        socket.emit('join-room', {
+          rawRoomId: currentRoomId,
+          username: enteredName,
+          avatar: customAvatarBase64 || chosenAvatar
+        });
       } catch (err) {
-        alert('Hardware audio capture permissions required to initialize connection.');
+        alert('Microphone hardware permission required.');
       }
     };
 
@@ -547,36 +764,71 @@
     };
 
     // Responsive Chat Toggles
-    chatToggleBtn.onclick = () => {
-      chatSection.classList.toggle('show-mobile');
-    };
-    hideChatBtn.onclick = () => {
-      chatSection.classList.remove('show-mobile');
-    };
+    chatToggleBtn.onclick = () => chatSection.classList.toggle('show-mobile');
+    hideChatBtn.onclick = () => chatSection.classList.remove('show-mobile');
 
-    // Mute Switch
+    // Mute Audio
     muteBtn.onclick = () => {
       if (!localStream) return;
       isMuted = !isMuted;
       localStream.getAudioTracks()[0].enabled = !isMuted;
 
       if (isMuted) {
-        muteBtn.innerText = 'Unmute';
+        muteBtn.innerText = 'Unmute Mic';
         selfState.innerText = 'Muted';
-        selfIndicator.classList.remove('active-voice');
+        selfAvatarFallback.classList.remove('active-voice');
       } else {
-        muteBtn.innerText = 'Mute';
-        selfState.innerText = 'Online';
+        muteBtn.innerText = 'Mute Mic';
+        selfState.innerText = isVideoActive ? 'Video Active' : 'Audio Active';
       }
     };
 
-    // Web Audio Analyzer
-    function attachVoiceDetector(stream, targetElement, isLocal) {
+    // Camera Video Toggle
+    cameraBtn.onclick = async () => {
+      if (!isVideoActive) {
+        try {
+          const videoStream = await navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360 } });
+          const videoTrack = videoStream.getVideoTracks()[0];
+          localStream.addTrack(videoTrack);
+          selfVideo.srcObject = localStream;
+          selfVideo.style.display = 'block';
+          selfAvatarFallback.style.display = 'none';
+          cameraBtn.innerText = 'Stop Video';
+          isVideoActive = true;
+          selfState.innerText = isMuted ? 'Muted' : 'Video Active';
+
+          // Add track to all active peer connections
+          peerConnections.forEach((pc) => {
+            const senders = pc.getSenders();
+            const existingVideoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (existingVideoSender) {
+              existingVideoSender.replaceTrack(videoTrack);
+            } else {
+              pc.addTrack(videoTrack, localStream);
+            }
+          });
+        } catch (err) {
+          alert('Camera hardware could not be initialized.');
+        }
+      } else {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.stop();
+          localStream.removeTrack(videoTrack);
+        }
+        selfVideo.style.display = 'none';
+        selfAvatarFallback.style.display = 'flex';
+        cameraBtn.innerText = 'Start Video';
+        isVideoActive = false;
+        selfState.innerText = isMuted ? 'Muted' : 'Audio Active';
+      }
+    };
+
+    // Voice Activity Detection
+    function attachVoiceDetector(stream, targetElem, isLocal) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       const audioCtx = new AudioCtx();
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
 
       const analyser = audioCtx.createAnalyser();
       const source = audioCtx.createMediaStreamSource(stream);
@@ -586,23 +838,23 @@
 
       function runCheck() {
         if (isLocal && isMuted) {
-          targetElement.classList.remove('active-voice');
+          targetElem.classList.remove('active-voice');
         } else {
           analyser.getByteFrequencyData(buffer);
           let sum = buffer.reduce((a, b) => a + b, 0);
-          let average = sum / buffer.length;
-          targetElement.classList.toggle('active-voice', average > 12);
+          let avg = sum / buffer.length;
+          targetElem.classList.toggle('active-voice', avg > 12);
         }
         requestAnimationFrame(runCheck);
       }
       runCheck();
     }
 
-    // Text Sanitization
+    // Text Chat Sanitization & Transmission
     function sanitize(text) {
-      const d = document.createElement('div');
-      d.innerText = text;
-      return d.innerHTML;
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
     }
 
     function transmitMessage() {
@@ -613,17 +865,15 @@
     }
 
     sendBtn.onclick = transmitMessage;
-    chatInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') transmitMessage();
-    });
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') transmitMessage(); });
 
     socket.on('receive-message', (data) => {
-      const isSelf = data.originalSenderId === socket.id;
+      const isSelf = data.senderId === socket.id;
       const item = document.createElement('div');
       item.className = 'message-item';
       item.innerHTML = 
         '<div class="message-head">' +
-          '<span class="message-author">' + (isSelf ? 'Local Host' : 'Remote Peer') + '</span>' +
+          '<span class="message-author">' + sanitize(data.senderName) + '</span>' +
           '<span>' + sanitize(data.time) + '</span>' +
         '</div>' +
         '<div>' + sanitize(data.text) + '</div>';
@@ -631,61 +881,134 @@
       messageFeed.scrollTop = messageFeed.scrollHeight;
     });
 
-    // Signaling Handlers
-    socket.on('user-joined', async (userId) => {
-      remoteBlock.style.display = 'flex';
+    // Remote Peer Tile Generation
+    function createPeerBlock(peer) {
       emptyNotice.style.display = 'none';
-      peerConnection = initPeer(userId);
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      socket.emit('signal', { target: userId, signal: offer });
-    });
 
-    socket.on('signal', async ({ sender, signal }) => {
-      remoteBlock.style.display = 'flex';
-      emptyNotice.style.display = 'none';
-      if (!peerConnection) peerConnection = initPeer(sender);
+      const block = document.createElement('div');
+      block.className = 'user-block';
+      block.id = 'peer-' + peer.id;
 
-      if (signal.type === 'offer') {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        socket.emit('signal', { target: sender, signal: answer });
-      } else if (signal.type === 'answer') {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
-      } else if (signal.candidate) {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
+      const viewport = document.createElement('div');
+      viewport.className = 'video-viewport';
+
+      const video = document.createElement('video');
+      video.autoplay = true;
+      video.playsInline = true;
+
+      const avatarBox = document.createElement('div');
+      avatarBox.className = 'user-avatar-element';
+
+      if (peer.avatar && peer.avatar.startsWith('data:image')) {
+        avatarBox.innerHTML = `<img src="${peer.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
+      } else {
+        avatarBox.innerText = peer.avatar || 'PEER';
       }
-    });
 
-    socket.on('user-left', () => {
-      remoteBlock.style.display = 'none';
-      emptyNotice.style.display = 'flex';
-      if (peerConnection) {
-        peerConnection.close();
-        peerConnection = null;
-      }
-    });
+      viewport.appendChild(video);
+      viewport.appendChild(avatarBox);
 
-    function initPeer(targetUserId) {
+      const nameLabel = document.createElement('div');
+      nameLabel.className = 'user-label';
+      nameLabel.innerText = peer.name || 'Remote Peer';
+
+      const stateLabel = document.createElement('div');
+      stateLabel.className = 'user-state';
+      stateLabel.innerText = 'Connected';
+
+      const audio = document.createElement('audio');
+      audio.autoplay = true;
+      audio.playsInline = true;
+
+      block.appendChild(viewport);
+      block.appendChild(nameLabel);
+      block.appendChild(stateLabel);
+      block.appendChild(audio);
+
+      peersContainer.appendChild(block);
+      peerBlocks.set(peer.id, { block, video, avatarBox, audio });
+      return { block, video, avatarBox, audio };
+    }
+
+    // WebRTC Peer Lifecycle
+    function setupPeerConnection(targetId, initiator) {
       const pc = new RTCPeerConnection(rtcConfig);
-      localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+      peerConnections.set(targetId, pc);
+
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
       pc.ontrack = (event) => {
-        const audio = document.getElementById('remoteAudio');
-        audio.srcObject = event.streams[0];
-        audio.play().catch(() => {});
-        attachVoiceDetector(event.streams[0], remoteIndicator, false);
+        let refs = peerBlocks.get(targetId);
+        if (!refs) refs = createPeerBlock({ id: targetId, name: 'Remote Peer', avatar: 'PEER' });
+
+        if (event.track.kind === 'audio') {
+          refs.audio.srcObject = event.streams[0];
+          refs.audio.play().catch(() => {});
+          attachVoiceDetector(event.streams[0], refs.avatarBox, false);
+        } else if (event.track.kind === 'video') {
+          refs.video.srcObject = event.streams[0];
+          refs.video.style.display = 'block';
+          refs.avatarBox.style.display = 'none';
+        }
       };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          socket.emit('signal', { target: targetUserId, signal: { candidate: event.candidate } });
+          socket.emit('signal', { target: targetId, signal: { candidate: event.candidate } });
         }
       };
 
+      if (initiator) {
+        pc.createOffer().then(offer => {
+          pc.setLocalDescription(offer);
+          socket.emit('signal', { target: targetId, signal: offer });
+        });
+      }
+
       return pc;
     }
+
+    socket.on('current-peers', (peers) => {
+      peers.forEach(peer => {
+        createPeerBlock(peer);
+        setupPeerConnection(peer.id, true);
+      });
+    });
+
+    socket.on('user-joined', (peer) => {
+      createPeerBlock(peer);
+      setupPeerConnection(peer.id, false);
+    });
+
+    socket.on('signal', async ({ sender, signal }) => {
+      let pc = peerConnections.get(sender);
+      if (!pc) pc = setupPeerConnection(sender, false);
+
+      if (signal.type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(signal));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('signal', { target: sender, signal: answer });
+      } else if (signal.type === 'answer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(signal));
+      } else if (signal.candidate) {
+        await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+      }
+    });
+
+    socket.on('user-left', (peerId) => {
+      if (peerConnections.has(peerId)) {
+        peerConnections.get(peerId).close();
+        peerConnections.delete(peerId);
+      }
+      if (peerBlocks.has(peerId)) {
+        peerBlocks.get(peerId).block.remove();
+        peerBlocks.delete(peerId);
+      }
+      if (peerBlocks.size === 0) {
+        emptyNotice.style.display = 'flex';
+      }
+    });
   </script>
 </body>
 </html>
