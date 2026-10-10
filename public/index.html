@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="Peer-to-peer audio, video, and text messaging engine built on WebRTC and WebSockets.">
+  <meta name="description" content="Peer-to-peer audio, video, and text collaboration engine built on WebRTC and WebSockets.">
   <meta name="theme-color" content="#18181b">
   <title>Voice & Video Engine Node</title>
   <style>
@@ -25,7 +25,7 @@
       overflow: hidden;
     }
 
-    /* Modal Layer */
+    /* Modal Layers */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -111,51 +111,109 @@
       border-color: #d4d4d8;
     }
 
-    /* Preset Avatar Selector */
-    .avatar-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .avatar-tile {
-      height: 48px;
+    /* Identity Row */
+    .identity-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
       background-color: #18181b;
       border: 1px solid #52525b;
+      padding: 10px;
+    }
+
+    .current-avatar-preview {
+      width: 52px;
+      height: 52px;
+      background-color: #27272a;
+      border: 1px solid #71717a;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 700;
-      color: #d4d4d8;
+      overflow: hidden;
+      flex-shrink: 0;
     }
 
-    .avatar-tile.selected {
-      border: 2px solid #fafafa;
-      background-color: #3f3f46;
-      color: #fff;
+    .current-avatar-preview svg {
+      width: 38px;
+      height: 38px;
     }
 
-    .upload-btn-wrap {
+    .current-avatar-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .identity-actions {
       display: flex;
-      align-items: center;
       gap: 8px;
-      margin-bottom: 14px;
+      flex: 1;
+    }
+
+    .identity-actions button {
+      flex: 1;
+      padding: 8px 6px;
+      font-size: 11px;
     }
 
     .file-input-hidden {
       display: none;
     }
 
-    .preview-box {
-      width: 36px;
-      height: 36px;
-      background-color: #09090b;
+    /* Pop-up Avatar Selection Modal */
+    .avatar-catalog-box {
+      background-color: #27272a;
       border: 1px solid #52525b;
-      object-fit: cover;
-      display: none;
+      padding: 20px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      overflow-y: auto;
+      padding: 4px;
+      margin: 12px 0;
+    }
+
+    .avatar-tile {
+      height: 76px;
+      background-color: #18181b;
+      border: 1px solid #52525b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 6px;
+      gap: 4px;
+    }
+
+    .avatar-tile svg {
+      width: 34px;
+      height: 34px;
+    }
+
+    .avatar-tile span {
+      font-size: 9px;
+      font-weight: 700;
+      color: #a1a1aa;
+      text-transform: uppercase;
+    }
+
+    .avatar-tile.selected {
+      border: 2px solid #fafafa;
+      background-color: #3f3f46;
+    }
+
+    .avatar-tile.selected span {
+      color: #fafafa;
     }
 
     .btn {
@@ -296,14 +354,23 @@
     .user-avatar-element {
       width: 64px;
       height: 64px;
-      background-color: #3f3f46;
+      background-color: #18181b;
       border: 2px solid #52525b;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
-      font-weight: 700;
-      color: #fafafa;
+      object-fit: cover;
+      overflow: hidden;
+    }
+
+    .user-avatar-element svg {
+      width: 44px;
+      height: 44px;
+    }
+
+    .user-avatar-element img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
     }
 
@@ -478,7 +545,6 @@
 </head>
 <body>
 
-  <!-- Entry / Setup Modal -->
   <div class="modal-overlay" id="entryModal">
     <div class="panel-box">
       <h1>Voice & Video Session</h1>
@@ -500,17 +566,14 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Select Profile Icon or Upload</label>
-        <div class="avatar-grid">
-          <div class="avatar-tile selected" data-avatar="OPERATOR">OPR</div>
-          <div class="avatar-tile" data-avatar="PILOT">PLT</div>
-          <div class="avatar-tile" data-avatar="NOMAD">NMD</div>
-          <div class="avatar-tile" data-avatar="CYBER">CYB</div>
-        </div>
-        <div class="upload-btn-wrap">
-          <input type="file" id="imageFileInput" accept="image/*" class="file-input-hidden">
-          <button type="button" class="btn btn-secondary" id="triggerUploadBtn">Choose Photo</button>
-          <img id="avatarPreview" class="preview-box" alt="Avatar">
+        <label class="form-label">Profile Avatar</label>
+        <div class="identity-row">
+          <div class="current-avatar-preview" id="mainAvatarPreview"></div>
+          <div class="identity-actions">
+            <button type="button" class="btn btn-secondary" id="openAvatarCatalogBtn">Choose Avatar</button>
+            <input type="file" id="imageFileInput" accept="image/*" class="file-input-hidden">
+            <button type="button" class="btn btn-secondary" id="triggerUploadBtn">Upload Photo</button>
+          </div>
         </div>
       </div>
 
@@ -523,7 +586,18 @@
     </div>
   </div>
 
-  <!-- Terms Modal -->
+  <div class="modal-overlay" id="avatarCatalogModal" style="display: none; z-index: 110;">
+    <div class="avatar-catalog-box">
+      <h2>Select Avatar Graphic</h2>
+      <p>Choose one of the 12 built-in identity icons.</p>
+
+      <div class="avatar-grid" id="catalogGrid">
+        </div>
+
+      <button class="btn btn-solid" id="confirmAvatarBtn" style="margin-top: 8px;">Confirm Selection</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="termsModal" style="display: none;">
     <div class="panel-box document-card">
       <h2>Terms of Service</h2>
@@ -534,7 +608,6 @@
     </div>
   </div>
 
-  <!-- Privacy Modal -->
   <div class="modal-overlay" id="privacyModal" style="display: none;">
     <div class="panel-box document-card">
       <h2>Privacy Policy</h2>
@@ -544,7 +617,6 @@
     </div>
   </div>
 
-  <!-- Navigation Bar -->
   <header>
     <div class="brand-title">Node Collaboration Stage</div>
     <div class="session-info" id="sessionInfo" style="display: none;">
@@ -553,27 +625,23 @@
     </div>
   </header>
 
-  <!-- Workspace Body -->
   <div class="workspace">
     <div class="stage">
       <div class="peers-container" id="peersContainer">
-        <!-- Self Participant Tile -->
         <div class="user-block" id="selfBlock">
           <div class="video-viewport">
             <video id="selfVideo" autoplay muted playsinline></video>
-            <div id="selfAvatarFallback" class="user-avatar-element">OPR</div>
+            <div id="selfAvatarFallback" class="user-avatar-element"></div>
           </div>
           <div class="user-label" id="selfNameLabel">User-Alpha</div>
           <div class="user-state" id="selfState">Audio Active</div>
         </div>
 
-        <!-- Waiting Notice -->
         <div class="empty-notice" id="emptyNotice">
           Waiting for remote peers to join room code.
         </div>
       </div>
 
-      <!-- Action Deck -->
       <div class="action-deck" id="actionDeck" style="display: none;">
         <button class="btn btn-secondary" id="muteBtn">Mute Mic</button>
         <button class="btn btn-secondary" id="cameraBtn">Start Video</button>
@@ -582,7 +650,6 @@
       </div>
     </div>
 
-    <!-- Chat Console -->
     <div class="chat-section" id="chatSection">
       <div class="chat-header">
         <span>Session Data Log</span>
@@ -603,14 +670,29 @@
     let isMuted = false;
     let isVideoActive = false;
     let currentRoomId = '';
-    let chosenAvatar = 'OPR';
+    let selectedAvatarKey = 'OPERATOR';
+    let tempSelectedKey = 'OPERATOR';
     let customAvatarBase64 = null;
     let isCreateMode = true;
 
-    // Track active peer connections and DOM blocks by peer ID
+    // 12 Distinct SVG Avatars (Sharp, Monochromatic, Utility Design)
+    const AVATARS = {
+      OPERATOR: { label: 'Operator', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="10" y="8" width="16" height="16" fill="#71717a"/><rect x="6" y="14" width="4" height="10" fill="#a1a1aa"/><rect x="26" y="14" width="4" height="10" fill="#a1a1aa"/><rect x="8" y="22" width="12" height="2" fill="#fafafa"/><rect x="6" y="30" width="24" height="6" fill="#52525b"/></svg>' },
+      PILOT:    { label: 'Pilot', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="8" y="6" width="20" height="18" fill="#52525b"/><rect x="10" y="12" width="16" height="5" fill="#fafafa"/><rect x="6" y="30" width="24" height="6" fill="#3f3f46"/></svg>' },
+      NOMAD:    { label: 'Nomad', svg: '<svg viewBox="0 0 36 36" fill="none"><polygon points="18,6 28,26 8,26" fill="#52525b"/><rect x="14" y="15" width="8" height="3" fill="#fafafa"/><rect x="6" y="30" width="24" height="6" fill="#71717a"/></svg>' },
+      CYBER:    { label: 'Cyber', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="8" y="8" width="20" height="16" fill="#27272a" stroke="#71717a" stroke-width="2"/><circle cx="14" cy="16" r="3" fill="#22c55e"/><rect x="20" y="15" width="6" height="2" fill="#fafafa"/><rect x="6" y="30" width="24" height="6" fill="#3f3f46"/></svg>' },
+      ENGINEER: { label: 'Engineer', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="8" y="6" width="20" height="8" fill="#a1a1aa"/><rect x="11" y="14" width="14" height="12" fill="#71717a"/><rect x="14" y="18" width="8" height="2" fill="#18181b"/><rect x="6" y="30" width="24" height="6" fill="#52525b"/></svg>' },
+      SCOUT:    { label: 'Scout', svg: '<svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="16" r="8" fill="#52525b"/><circle cx="15" cy="15" r="2" fill="#fafafa"/><circle cx="21" cy="15" r="2" fill="#fafafa"/><rect x="6" y="30" width="24" height="6" fill="#71717a"/></svg>' },
+      DROID:    { label: 'Droid', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="10" y="10" width="16" height="14" fill="#3f3f46"/><rect x="13" y="14" width="10" height="4" fill="#22c55e"/><line x1="18" y1="4" x2="18" y2="10" stroke="#fafafa" stroke-width="2"/><rect x="6" y="30" width="24" height="6" fill="#27272a"/></svg>' },
+      RADAR:    { label: 'Radar', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="8" y="8" width="20" height="18" fill="#18181b" stroke="#52525b" stroke-width="2"/><circle cx="18" cy="17" r="5" stroke="#a1a1aa" stroke-width="1.5"/><line x1="18" y1="17" x2="22" y2="14" stroke="#22c55e" stroke-width="2"/><rect x="6" y="30" width="24" height="6" fill="#3f3f46"/></svg>' },
+      SPECTRE:  { label: 'Spectre', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="10" y="8" width="16" height="18" fill="#27272a"/><line x1="12" y1="15" x2="24" y2="15" stroke="#fafafa" stroke-width="2"/><rect x="6" y="30" width="24" height="6" fill="#18181b"/></svg>' },
+      MINER:    { label: 'Miner', svg: '<svg viewBox="0 0 36 36" fill="none"><polygon points="8,10 28,10 24,24 12,24" fill="#71717a"/><circle cx="18" cy="8" r="3" fill="#fafafa"/><rect x="6" y="30" width="24" height="6" fill="#52525b"/></svg>' },
+      MEDIC:    { label: 'Medic', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="10" y="8" width="16" height="16" fill="#52525b"/><rect x="16" y="11" width="4" height="10" fill="#fafafa"/><rect x="13" y="14" width="10" height="4" fill="#fafafa"/><rect x="6" y="30" width="24" height="6" fill="#3f3f46"/></svg>' },
+      SYNTH:    { label: 'Synth', svg: '<svg viewBox="0 0 36 36" fill="none"><rect x="9" y="9" width="18" height="15" fill="#3f3f46"/><rect x="12" y="13" width="4" height="4" fill="#fafafa"/><rect x="20" y="13" width="4" height="4" fill="#fafafa"/><line x1="13" y1="20" x2="23" y2="20" stroke="#71717a" stroke-width="2"/><rect x="6" y="30" width="24" height="6" fill="#27272a"/></svg>' }
+    };
+
     const peerConnections = new Map();
     const peerBlocks = new Map();
-
     const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
     // DOM Elements
@@ -620,11 +702,15 @@
     const roomGroupJoin = document.getElementById('roomGroupJoin');
     const nameInput = document.getElementById('nameInput');
     const roomInput = document.getElementById('roomInput');
-    const avatarTiles = document.querySelectorAll('.avatar-tile');
+    const mainAvatarPreview = document.getElementById('mainAvatarPreview');
+    const openAvatarCatalogBtn = document.getElementById('openAvatarCatalogBtn');
     const triggerUploadBtn = document.getElementById('triggerUploadBtn');
     const imageFileInput = document.getElementById('imageFileInput');
-    const avatarPreview = document.getElementById('avatarPreview');
     const startSessionBtn = document.getElementById('startSessionBtn');
+
+    const avatarCatalogModal = document.getElementById('avatarCatalogModal');
+    const catalogGrid = document.getElementById('catalogGrid');
+    const confirmAvatarBtn = document.getElementById('confirmAvatarBtn');
 
     const termsModal = document.getElementById('termsModal');
     const privacyModal = document.getElementById('privacyModal');
@@ -655,13 +741,69 @@
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    // Modals
+    // Build Catalog Modal Grid
+    function renderCatalogGrid() {
+      catalogGrid.innerHTML = '';
+      Object.keys(AVATARS).forEach(key => {
+        const item = AVATARS[key];
+        const tile = document.createElement('div');
+        tile.className = 'avatar-tile' + (key === tempSelectedKey ? ' selected' : '');
+        tile.innerHTML = item.svg + '<span>' + item.label + '</span>';
+        tile.onclick = () => {
+          document.querySelectorAll('.avatar-tile').forEach(t => t.classList.remove('selected'));
+          tile.classList.add('selected');
+          tempSelectedKey = key;
+        };
+        catalogGrid.appendChild(tile);
+      });
+    }
+
+    function updateMainPreview() {
+      if (customAvatarBase64) {
+        mainAvatarPreview.innerHTML = '<img src="' + customAvatarBase64 + '" alt="Avatar">';
+      } else {
+        mainAvatarPreview.innerHTML = AVATARS[selectedAvatarKey].svg;
+      }
+    }
+
+    // Initialize Default
+    updateMainPreview();
+    selfAvatarFallback.innerHTML = AVATARS.OPERATOR.svg;
+
+    // Pop-up Catalog Handlers
+    openAvatarCatalogBtn.onclick = () => {
+      tempSelectedKey = selectedAvatarKey;
+      renderCatalogGrid();
+      avatarCatalogModal.style.display = 'flex';
+    };
+
+    confirmAvatarBtn.onclick = () => {
+      selectedAvatarKey = tempSelectedKey;
+      customAvatarBase64 = null;
+      updateMainPreview();
+      avatarCatalogModal.style.display = 'none';
+    };
+
+    // Upload Photo Handler
+    triggerUploadBtn.onclick = () => imageFileInput.click();
+    imageFileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        customAvatarBase64 = ev.target.result;
+        updateMainPreview();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // Terms / Privacy
     openTermsLink.onclick = () => { termsModal.style.display = 'flex'; };
     closeTermsBtn.onclick = () => { termsModal.style.display = 'none'; };
     openPrivacyLink.onclick = () => { privacyModal.style.display = 'flex'; };
     closePrivacyBtn.onclick = () => { privacyModal.style.display = 'none'; };
 
-    // Tab Switches: Create vs. Join
+    // Tabs
     tabCreate.onclick = () => {
       isCreateMode = true;
       tabCreate.classList.add('active');
@@ -678,40 +820,22 @@
       startSessionBtn.innerText = 'Join Room';
     };
 
-    // Pre-populate if query parameter exists
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('room')) {
       tabJoin.click();
       roomInput.value = urlParams.get('room').replace(/[^a-zA-Z0-9-_]/g, '').toUpperCase();
     }
 
-    // Avatar Selection & Image Upload
-    avatarTiles.forEach(tile => {
-      tile.onclick = () => {
-        avatarTiles.forEach(t => t.classList.remove('selected'));
-        tile.classList.add('selected');
-        chosenAvatar = tile.getAttribute('data-avatar');
-        customAvatarBase64 = null;
-        avatarPreview.style.display = 'none';
-      };
-    });
+    // Helper: Output Avatar HTML
+    function getAvatarMarkup(avatarData) {
+      if (!avatarData) return AVATARS.OPERATOR.svg;
+      if (avatarData.startsWith('data:image')) {
+        return '<img src="' + avatarData + '" alt="Avatar">';
+      }
+      return (AVATARS[avatarData] ? AVATARS[avatarData].svg : AVATARS.OPERATOR.svg);
+    }
 
-    triggerUploadBtn.onclick = () => imageFileInput.click();
-    imageFileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        customAvatarBase64 = uploadEvent.target.result;
-        avatarPreview.src = customAvatarBase64;
-        avatarPreview.style.display = 'block';
-        avatarTiles.forEach(t => t.classList.remove('selected'));
-        chosenAvatar = 'CUSTOM';
-      };
-      reader.readAsDataURL(file);
-    };
-
-    // Session Start
+    // Start Session
     startSessionBtn.onclick = async () => {
       const enteredName = nameInput.value.trim() || 'User-Alpha';
       selfNameLabel.innerText = enteredName;
@@ -722,12 +846,7 @@
         currentRoomId = roomInput.value.trim().toUpperCase() || 'ROOM-1000';
       }
 
-      // Configure local avatar display
-      if (customAvatarBase64) {
-        selfAvatarFallback.innerHTML = `<img src="${customAvatarBase64}" style="width:100%;height:100%;object-fit:cover;">`;
-      } else {
-        selfAvatarFallback.innerText = chosenAvatar;
-      }
+      selfAvatarFallback.innerHTML = getAvatarMarkup(customAvatarBase64 || selectedAvatarKey);
 
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -744,30 +863,26 @@
         socket.emit('join-room', {
           rawRoomId: currentRoomId,
           username: enteredName,
-          avatar: customAvatarBase64 || chosenAvatar
+          avatar: customAvatarBase64 || selectedAvatarKey
         });
       } catch (err) {
         alert('Microphone hardware permission required.');
       }
     };
 
-    // Copy Session URL
     copyBtn.onclick = () => {
       navigator.clipboard.writeText(window.location.href);
       copyBtn.innerText = 'Copied';
       setTimeout(() => { copyBtn.innerText = 'Copy Link'; }, 2000);
     };
 
-    // Disconnect
     disconnectBtn.onclick = () => {
       window.location.href = window.location.origin;
     };
 
-    // Responsive Chat Toggles
     chatToggleBtn.onclick = () => chatSection.classList.toggle('show-mobile');
     hideChatBtn.onclick = () => chatSection.classList.remove('show-mobile');
 
-    // Mute Audio
     muteBtn.onclick = () => {
       if (!localStream) return;
       isMuted = !isMuted;
@@ -783,7 +898,6 @@
       }
     };
 
-    // Camera Video Toggle
     cameraBtn.onclick = async () => {
       if (!isVideoActive) {
         try {
@@ -797,7 +911,6 @@
           isVideoActive = true;
           selfState.innerText = isMuted ? 'Muted' : 'Video Active';
 
-          // Add track to all active peer connections
           peerConnections.forEach((pc) => {
             const senders = pc.getSenders();
             const existingVideoSender = senders.find(s => s.track && s.track.kind === 'video');
@@ -824,7 +937,6 @@
       }
     };
 
-    // Voice Activity Detection
     function attachVoiceDetector(stream, targetElem, isLocal) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       const audioCtx = new AudioCtx();
@@ -850,7 +962,6 @@
       runCheck();
     }
 
-    // Text Chat Sanitization & Transmission
     function sanitize(text) {
       const div = document.createElement('div');
       div.innerText = text;
@@ -868,7 +979,6 @@
     chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') transmitMessage(); });
 
     socket.on('receive-message', (data) => {
-      const isSelf = data.senderId === socket.id;
       const item = document.createElement('div');
       item.className = 'message-item';
       item.innerHTML = 
@@ -881,7 +991,6 @@
       messageFeed.scrollTop = messageFeed.scrollHeight;
     });
 
-    // Remote Peer Tile Generation
     function createPeerBlock(peer) {
       emptyNotice.style.display = 'none';
 
@@ -898,12 +1007,7 @@
 
       const avatarBox = document.createElement('div');
       avatarBox.className = 'user-avatar-element';
-
-      if (peer.avatar && peer.avatar.startsWith('data:image')) {
-        avatarBox.innerHTML = `<img src="${peer.avatar}" style="width:100%;height:100%;object-fit:cover;">`;
-      } else {
-        avatarBox.innerText = peer.avatar || 'PEER';
-      }
+      avatarBox.innerHTML = getAvatarMarkup(peer.avatar);
 
       viewport.appendChild(video);
       viewport.appendChild(avatarBox);
@@ -930,7 +1034,6 @@
       return { block, video, avatarBox, audio };
     }
 
-    // WebRTC Peer Lifecycle
     function setupPeerConnection(targetId, initiator) {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnections.set(targetId, pc);
@@ -939,7 +1042,7 @@
 
       pc.ontrack = (event) => {
         let refs = peerBlocks.get(targetId);
-        if (!refs) refs = createPeerBlock({ id: targetId, name: 'Remote Peer', avatar: 'PEER' });
+        if (!refs) refs = createPeerBlock({ id: targetId, name: 'Remote Peer', avatar: 'OPERATOR' });
 
         if (event.track.kind === 'audio') {
           refs.audio.srcObject = event.streams[0];
